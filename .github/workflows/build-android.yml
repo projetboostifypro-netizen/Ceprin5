@@ -1,0 +1,69 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install -g cordova imagemagick
+
+      - name: Create Cordova project
+        run: |
+          rm -rf Nanopay.abd
+          cordova create Nanopay.abd com.nanopay.app Nanopay
+          cd Nanopay.abd
+          cordova platform add android
+          cordova plugin add cordova-plugin-inappbrowser
+
+          # Crée logo texte jaune sur fond noir
+          mkdir -p resources/android
+          convert -size 512x512 xc:black -gravity center -pointsize 72 -fill yellow -annotate 0 "Nanopay" resources/android/icon.png
+          sed -i '/<widget /a <icon src="resources/android/icon.png"/>' config.xml
+
+          # Crée www/index.js pour ouvrir WebView
+          mkdir -p www/js
+          cat > www/js/index.js << 'JS_EOF'
+document.addEventListener('deviceready', function() {
+    cordova.InAppBrowser.open('https://west-african-card.vercel.app/', '_self', 'location=no,toolbar=no');
+}, false);
+JS_EOF
+
+          # Crée index.html minimal
+          cat > www/index.html << 'HTML_EOF'
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NanoPay</title>
+  <script src="cordova.js"></script>
+  <script src="js/index.js"></script>
+</head>
+<body>
+</body>
+</html>
+HTML_EOF
+
+          # Compile l'APK
+          cordova build android --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Nanopay-APK
+          path: Nanopay.abd/platforms/android/app/build/outputs/apk/release/app-release.apk
