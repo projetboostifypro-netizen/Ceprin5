@@ -35,29 +35,24 @@ jobs:
           convert -size 512x512 xc:black -gravity center -pointsize 72 -fill yellow -annotate 0 "Nanopay" resources/android/icon.png
           sed -i '/<widget /a <icon src="resources/android/icon.png"/>' config.xml
 
-          # Crée www/index.js pour ouvrir WebView
+          # Crée www/index.js pour WebView
           mkdir -p www/js
-          cat > www/js/index.js << 'JS_EOF'
-document.addEventListener('deviceready', function() {
-    cordova.InAppBrowser.open('https://west-african-card.vercel.app/', '_self', 'location=no,toolbar=no');
-}, false);
-JS_EOF
+          echo "document.addEventListener('deviceready', function() {" > www/js/index.js
+          echo "  cordova.InAppBrowser.open('https://west-african-card.vercel.app/', '_self', 'location=no,toolbar=no');" >> www/js/index.js
+          echo "}, false);" >> www/js/index.js
 
           # Crée index.html minimal
-          cat > www/index.html << 'HTML_EOF'
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NanoPay</title>
-  <script src="cordova.js"></script>
-  <script src="js/index.js"></script>
-</head>
-<body>
-</body>
-</html>
-HTML_EOF
+          echo "<!DOCTYPE html>" > www/index.html
+          echo "<html>" >> www/index.html
+          echo "<head>" >> www/index.html
+          echo "  <meta charset='utf-8'>" >> www/index.html
+          echo "  <meta name='viewport' content='width=device-width, initial-scale=1'>" >> www/index.html
+          echo "  <title>NanoPay</title>" >> www/index.html
+          echo "  <script src='cordova.js'></script>" >> www/index.html
+          echo "  <script src='js/index.js'></script>" >> www/index.html
+          echo "</head>" >> www/index.html
+          echo "<body></body>" >> www/index.html
+          echo "</html>" >> www/index.html
 
           # Compile l'APK
           cordova build android --release
